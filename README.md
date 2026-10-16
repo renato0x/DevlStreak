@@ -6,7 +6,7 @@
 
 Turn your GitHub activity into a visual journey of growth — streaks, XP, levels, achievements, and shareable cards, all in one place.
 
-[![Status: Planning][status-badge]][repo-url]
+[![Status: Development][status-badge]][repo-url]
 [![License: MIT][license-badge]][license-url]
 
 <br/>
@@ -25,7 +25,7 @@ DevlStreak connects to your GitHub account and transforms your contribution data
 - **XP & Levels** — grow continuously based on what you build
 - **Achievements** — unlock milestones as you hit personal records
 - **Statistics Hub** — heatmap, trends, and history in one dashboard
-- **Shareable Cards** — generate profile cards and badges for social and READMEs
+- **Shareable Cards** — public profile cards and badges at `/u/[username]`
 
 ## Pillars
 
@@ -38,22 +38,56 @@ DevlStreak connects to your GitHub account and transforms your contribution data
 
 ## Roadmap
 
-- [ ] GitHub OAuth authentication
-- [ ] Activity tracking & streak engine
-- [ ] Statistics dashboard with heatmap
-- [ ] XP & leveling system
-- [ ] Achievements engine
-- [ ] Shareable profile cards
-- [ ] PWA support
+- [x] Next.js 16 (App Router) + Tailwind CSS full-stack architecture
+- [x] GitHub OAuth authentication (NextAuth.js v5)
+- [x] Activity tracking & streak engine
+- [x] XP & leveling system
+- [x] Achievements engine & badges
+- [x] Statistics dashboard with 52-week heatmap
+- [x] Public profile pages (`/u/[username]`)
+- [x] PWA manifest & icons
+- [ ] Shareable SVG/PNG image export for cards
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | TBD |
-| Backend | TBD |
-| Auth | GitHub OAuth |
-| Data source | GitHub API |
+| Framework | Next.js 16 (App Router) |
+| UI & Styling | Tailwind CSS v4, Lucide Icons |
+| Auth | NextAuth.js v5 (GitHub OAuth) |
+| Database | Neon PostgreSQL (Serverless) |
+| ORM | Drizzle ORM |
+| Data source | GitHub API (GraphQL & REST) |
+
+## Quick Start
+
+1. Clone and install dependencies:
+```bash
+git clone https://github.com/renato0x/DevlStreak.git
+cd DevlStreak
+npm install
+```
+
+2. Configure environment variables in `.env.local` (copy from `.env.example`):
+```env
+GITHUB_CLIENT_ID=your_id
+GITHUB_CLIENT_SECRET=your_secret
+AUTH_SECRET=your_auth_secret
+DATABASE_URL=postgresql://user:password@endpoint.neon.tech/neondb
+NEXTAUTH_URL=http://localhost:3000
+```
+
+3. Push the database schema:
+```bash
+npm run db:push
+```
+
+4. Run the development server:
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## License
 
@@ -68,7 +102,7 @@ Distributed under the MIT License. See [`LICENSE`][license-url] for details.
 </div>
 
 <!-- Badges -->
-[status-badge]: https://img.shields.io/badge/status-planning-yellow?style=flat-square
+[status-badge]: https://img.shields.io/badge/status-development-violet?style=flat-square
 [license-badge]: https://img.shields.io/github/license/renato0x/DevlStreak?style=flat-square&color=blue
 
 <!-- Links -->
