@@ -40,6 +40,7 @@ DevlStreak connects to your GitHub account and transforms your contribution data
 
 - [x] Next.js 16 (App Router) + Tailwind CSS full-stack architecture
 - [x] GitHub OAuth authentication (NextAuth.js v5)
+- [x] Firebase Cloud Firestore database integration (100% Free / No card needed)
 - [x] Activity tracking & streak engine
 - [x] XP & leveling system
 - [x] Achievements engine & badges
@@ -55,9 +56,9 @@ DevlStreak connects to your GitHub account and transforms your contribution data
 | Framework | Next.js 16 (App Router) |
 | UI & Styling | Tailwind CSS v4, Lucide Icons |
 | Auth | NextAuth.js v5 (GitHub OAuth) |
-| Database | Neon PostgreSQL (Serverless) |
-| ORM | Drizzle ORM |
+| Database | Firebase Cloud Firestore (Spark Free Tier) |
 | Data source | GitHub API (GraphQL & REST) |
+| Deployment | Vercel (Hobby Free Tier) |
 
 ## Quick Start
 
@@ -70,19 +71,18 @@ npm install
 
 2. Configure environment variables in `.env.local` (copy from `.env.example`):
 ```env
-GITHUB_CLIENT_ID=your_id
-GITHUB_CLIENT_SECRET=your_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 AUTH_SECRET=your_auth_secret
-DATABASE_URL=postgresql://user:password@endpoint.neon.tech/neondb
 NEXTAUTH_URL=http://localhost:3000
+
+# Firebase Cloud Firestore (Spark Free Plan)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-3. Push the database schema:
-```bash
-npm run db:push
-```
-
-4. Run the development server:
+3. Run the development server:
 ```bash
 npm run dev
 ```

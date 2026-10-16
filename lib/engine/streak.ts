@@ -1,4 +1,7 @@
-import type { Contribution } from "@/lib/db/schema"
+export interface ContributionItem {
+  date: string
+  count: number
+}
 
 export interface StreakResult {
   current: number
@@ -11,7 +14,7 @@ export interface StreakResult {
  * from a list of contribution records.
  * A "day" is considered active when count > 0.
  */
-export function calculateStreak(contributions: Contribution[]): StreakResult {
+export function calculateStreak(contributions: ContributionItem[]): StreakResult {
   if (!contributions.length) {
     return { current: 0, longest: 0, totalActiveDays: 0 }
   }

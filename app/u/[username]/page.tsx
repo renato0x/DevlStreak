@@ -1,7 +1,4 @@
-import { db } from "@/lib/db"
-import { users, contributions, achievements } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
-import { notFound } from "next/navigation"
+import { dbService } from "@/lib/firebase/db"
 import Image from "next/image"
 import Link from "next/link"
 import { StatCard } from "@/components/stat-card"
@@ -23,9 +20,7 @@ interface ProfilePageProps {
 export default async function PublicProfilePage({ params }: ProfilePageProps) {
   const { username } = await params
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubLogin, username),
-  })
+  const user = await dbService.getUserByLogin(username)
 
   if (!user) {
     return (
@@ -47,21 +42,15 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
     )
   }
 
-  const userContributions = await db.query.contributions.findMany({
-    where: eq(contributions.userId, user.id),
-    orderBy: (c, { asc }) => [asc(c.date)],
-  })
-
-  const userAchievements = await db.query.achievements.findMany({
-    where: eq(achievements.userId, user.id),
-  })
+  const userContributions = await dbService.getContributions(user.id)
+  const userAchievements = await dbService.getAchievements(user.id)
 
   const xp = user.xp
   const level = user.level
   const xpForNext = level * 1000
   const currentLevelXp = xp % xpForNext
   const progressPercent = Math.min(100, Math.floor((currentLevelXp / xpForNext) * 100))
-  const unlockedTypes = userAchievements.map((a) => a.type as AchievementType)
+  const unlockedTypes = userAchievements.map((a) => a.type)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6 max-w-5xl mx-auto flex flex-col gap-6">
