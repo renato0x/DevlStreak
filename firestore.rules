@@ -1,0 +1,263 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: users
+// Document ID: {userId} (matches Firebase Auth UID)
+// Fields:
+//   - id: string (optional, matches userId) - User identifier
+//   - name: string | null (optional, 1-100 chars or null) - Profile display name
+//   - image: string | null (optional, valid HTTP/HTTPS URL, max 500 chars or null) - Avatar image
+//   - githubLogin: string | null (optional, 1-50 chars, alphanumeric/dash/underscore) - GitHub username
+//   - githubId: int | null (optional, positive integer) - GitHub numeric user ID
+//   - xp: int (optional, non-negative integer) - Experience points earned
+//   - level: int (optional, integer >= 1) - Current developer level
+//   - currentStreak: int (optional, non-negative integer) - Current consecutive active days
+//   - longestStreak: int (optional, non-negative integer) - All-time maximum streak
+//   - totalActiveDays: int (optional, non-negative integer) - Total active contribution days
+//   - lastSyncedAt: string | timestamp | null (optional, ISO 8601 string or timestamp) - Last sync time
+//   - createdAt: string | timestamp (required on create, ISO 8601 string or timestamp, immutable) - Creation time
+//   - updatedAt: string | timestamp | null (optional, ISO 8601 string or timestamp) - Last update time
+//   Note: Sensitive tokens (such as accessToken, refreshToken, secret) are strictly prohibited.
+//
+// Subcollection: users/{userId}/contributions
+// Document ID: {date} (YYYY-MM-DD date string)
+// Fields:
+//   - date: string (required, YYYY-MM-DD format, matches {date} document ID, immutable)
+//   - count: int (required, integer >= 0 and <= 100000) - Contribution count on that date
+//
+// Subcollection: users/{userId}/achievements
+// Document ID: {type} (matches achievement type identifier)
+// Fields:
+//   - type: string (required, valid AchievementType enum, matches {type} document ID, immutable)
+//   - unlockedAt: string | timestamp (required, ISO 8601 string or timestamp) - Unlock timestamp
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource by matching path userId
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate that document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that document contains all required fields
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate valid HTTP/HTTPS URL
+    function isValidUrl(url) {
+      return url is string &&
+        url.size() <= 500 &&
+        (url.matches('^https?://.*'));
+    }
+
+    // Validate ISO 8601 date string format (YYYY-MM-DDTHH:MM:SS...)
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.size() <= 40 &&
+        dateStr.matches('^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})?$');
+    }
+
+    // Validate YYYY-MM-DD contribution date string format
+    function isValidContributionDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.size() == 10 &&
+        dateStr.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    // Validate timestamp is either valid ISO 8601 string or Firestore timestamp
+    function isValidTimestampOrIso(val) {
+      return (val is string && isValidDateString(val)) || (val is timestamp);
+    }
+
+    // Ensure document does not expose sensitive tokens/secrets to public
+    function hasNoSensitiveData() {
+      return resource == null || (
+        !('accessToken' in resource.data) &&
+        !('token' in resource.data) &&
+        !('refreshToken' in resource.data) &&
+        !('secret' in resource.data)
+      );
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validate user profile document structure, bounds, and token exclusion
+    function isValidUser(userId, data) {
+      return hasOnlyAllowedFields([
+               'id',
+               'name',
+               'image',
+               'githubLogin',
+               'githubId',
+               'xp',
+               'level',
+               'currentStreak',
+               'longestStreak',
+               'totalActiveDays',
+               'lastSyncedAt',
+               'createdAt',
+               'updatedAt'
+             ]) &&
+             // Explicit token lockdown: never allow sensitive credentials in public user profile
+             !('accessToken' in data) &&
+             !('token' in data) &&
+             !('refreshToken' in data) &&
+             !('secret' in data) &&
+             // Identifier integrity
+             (!('id' in data) || (data.id is string && data.id == userId && data.id.size() <= 128)) &&
+             // Profile fields with bounds
+             (!('name' in data) || data.name == null || (data.name is string && data.name.size() > 0 && data.name.size() <= 100)) &&
+             (!('image' in data) || data.image == null || (isValidUrl(data.image))) &&
+             (!('githubLogin' in data) || data.githubLogin == null || (data.githubLogin is string && data.githubLogin.size() >= 1 && data.githubLogin.size() <= 50 && data.githubLogin.matches('^[a-zA-Z0-9_-]+$'))) &&
+             (!('githubId' in data) || data.githubId == null || (data.githubId is int && data.githubId >= 0)) &&
+             // Progression stats bounds
+             (!('xp' in data) || (data.xp is int && data.xp >= 0 && data.xp <= 1000000000)) &&
+             (!('level' in data) || (data.level is int && data.level >= 1 && data.level <= 100000)) &&
+             (!('currentStreak' in data) || (data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 100000)) &&
+             (!('longestStreak' in data) || (data.longestStreak is int && data.longestStreak >= 0 && data.longestStreak <= 100000)) &&
+             (!('totalActiveDays' in data) || (data.totalActiveDays is int && data.totalActiveDays >= 0 && data.totalActiveDays <= 100000)) &&
+             // Timestamp fields
+             (!('lastSyncedAt' in data) || data.lastSyncedAt == null || isValidTimestampOrIso(data.lastSyncedAt)) &&
+             (!('createdAt' in data) || isValidTimestampOrIso(data.createdAt)) &&
+             (!('updatedAt' in data) || data.updatedAt == null || isValidTimestampOrIso(data.updatedAt));
+    }
+
+    // Ensure immutable fields on user document are not modified on update
+    function areImmutableUserFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']);
+    }
+
+    // Validate contribution record
+    function isValidContribution(docDate, data) {
+      return hasRequiredFields(['date', 'count']) &&
+             hasOnlyAllowedFields(['date', 'count']) &&
+             data.date is string &&
+             data.date == docDate &&
+             isValidContributionDateString(data.date) &&
+             data.count is int &&
+             data.count >= 0 &&
+             data.count <= 100000;
+    }
+
+    // Ensure immutable contribution fields are not modified on update
+    function areImmutableContributionFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['date']);
+    }
+
+    // Validate achievement types against known domain milestones
+    function isValidAchievementType(typeStr) {
+      return typeStr in [
+        'first_commit',
+        'streak_7',
+        'streak_30',
+        'streak_100',
+        'level_5',
+        'level_10',
+        'days_50',
+        'days_100',
+        'days_365'
+      ];
+    }
+
+    // Validate achievement record
+    function isValidAchievement(docType, data) {
+      return hasRequiredFields(['type', 'unlockedAt']) &&
+             hasOnlyAllowedFields(['type', 'unlockedAt']) &&
+             data.type is string &&
+             data.type == docType &&
+             isValidAchievementType(data.type) &&
+             isValidTimestampOrIso(data.unlockedAt);
+    }
+
+    // Ensure immutable achievement fields are not modified on update
+    function areImmutableAchievementFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['type']);
+    }
+
+    // ===============================================================
+    // Rules Definitions
+    // ===============================================================
+
+    // User profile documents
+    match /users/{userId} {
+      // Public read for profile stats (/u/[username]), provided no sensitive tokens exist.
+      // Authenticated owners can always read their own profile.
+      allow get: if isOwner(userId) || hasNoSensitiveData();
+      // Allow profile lookup queries (e.g., searching by githubLogin)
+      allow list: if true;
+
+      // Only the authenticated owner can create/update their profile document
+      allow create: if isOwner(userId) &&
+                       hasRequiredFields(['createdAt']) &&
+                       isValidUser(userId, request.resource.data);
+
+      allow update: if isOwner(userId) &&
+                       isValidUser(userId, request.resource.data) &&
+                       areImmutableUserFieldsUnchanged();
+
+      // Only owner can delete their own profile
+      allow delete: if isOwner(userId);
+
+      // Subcollection: Contributions daily records
+      match /contributions/{date} {
+        // Read is restricted to the authenticated owner (least privilege)
+        allow read: if isOwner(userId);
+
+        // Only authenticated owner can write contribution records
+        allow create: if isOwner(userId) &&
+                         isValidContribution(date, request.resource.data);
+
+        allow update: if isOwner(userId) &&
+                         isValidContribution(date, request.resource.data) &&
+                         areImmutableContributionFieldsUnchanged();
+
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: User unlocked achievements
+      match /achievements/{type} {
+        // Public read for achievements to render badges on public profiles (/u/[username])
+        allow read: if true;
+
+        // Only authenticated owner can record their own unlocked achievements
+        allow create: if isOwner(userId) &&
+                         isValidAchievement(type, request.resource.data);
+
+        allow update: if isOwner(userId) &&
+                         isValidAchievement(type, request.resource.data) &&
+                         areImmutableAchievementFieldsUnchanged();
+
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Default deny for all other unmatched collections and documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
