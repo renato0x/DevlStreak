@@ -36,18 +36,6 @@ DevlStreak connects to your GitHub account and transforms your contribution data
 | **Gamification** | Streaks, XP, levels, weekly goals, and achievements |
 | **Shareable Identity** | Cards and badges to share your progress anywhere |
 
-## Roadmap
-
-- [x] Next.js 16 (App Router) + Tailwind CSS full-stack architecture
-- [x] GitHub OAuth authentication (NextAuth.js v5)
-- [x] Firebase Cloud Firestore database integration (100% Free / No card needed)
-- [x] Activity tracking & streak engine
-- [x] XP & leveling system
-- [x] Achievements engine & badges
-- [x] Statistics dashboard with 52-week heatmap
-- [x] Public profile pages (`/u/[username]`)
-- [x] PWA manifest & icons
-- [ ] Shareable SVG/PNG image export for cards
 
 ## Tech Stack
 
