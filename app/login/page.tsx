@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { signIn } from "next-auth/react"
 import { GithubIcon } from "@/components/icons"
 
@@ -14,9 +15,14 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center gap-4 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/25">
-            <span className="text-sm font-bold text-white">DS</span>
-          </div>
+          <Image
+            src="/logo.png"
+            alt="DevlStreak"
+            width={64}
+            height={64}
+            className="rounded-2xl shadow-lg shadow-violet-500/25"
+            priority
+          />
           <div className="text-center">
             <h1 className="text-xl font-semibold text-white tracking-tight">
               DevlStreak

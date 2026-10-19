@@ -10,9 +10,14 @@ export function Nav() {
   return (
     <header className="h-14 border-b border-white/[0.06] flex items-center justify-between px-6 shrink-0">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-md bg-violet-500 flex items-center justify-center">
-          <span className="text-[10px] font-bold text-white">DS</span>
-        </div>
+        <Image
+          src="/logo.png"
+          alt="DevlStreak"
+          width={28}
+          height={28}
+          className="rounded-md"
+          priority
+        />
         <span className="font-semibold text-sm text-white tracking-tight">
           DevlStreak
         </span>

@@ -10,7 +10,10 @@ export const metadata: Metadata = {
   description:
     "Turn your GitHub activity into a visual journey of growth — streaks, XP, levels, achievements, and shareable cards.",
   manifest: "/manifest.json",
-  icons: { apple: "/icon.svg" },
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: "/apple-icon.png",
+  },
 }
 
 export const viewport: Viewport = {
