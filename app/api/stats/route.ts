@@ -14,7 +14,16 @@ export async function GET() {
   const userAchievements = await dbService.getAchievements(userId)
 
   return NextResponse.json({
-    user,
+    user: user && {
+      xp: user.xp,
+      level: user.level,
+      currentStreak: user.currentStreak,
+      longestStreak: user.longestStreak,
+      totalActiveDays: user.totalActiveDays,
+      lastSyncedAt: user.lastSyncedAt,
+      githubLogin: user.githubLogin,
+      image: user.image,
+    },
     contributions: contribs,
     achievements: userAchievements,
   })

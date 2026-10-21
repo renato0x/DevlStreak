@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { dbService } from "@/lib/firebase/db"
-import { syncUserGitHub } from "@/lib/github/sync"
-import { fetchGitHubUser } from "@/lib/github/client"
+import { syncUserGitHubIfDue } from "@/lib/github/sync"
+import { GitHubApiError } from "@/lib/github/client"
+
+export const dynamic = "force-dynamic"
 
 export async function POST() {
   const session = await auth()
@@ -13,39 +15,38 @@ export async function POST() {
   const userId = session.user.id
   const user = await dbService.getUser(userId)
 
-  // Retrieve access token from session or user document
-  const accessToken =
-    (session as any).accessToken ||
-    user?.accessToken ||
-    process.env.GITHUB_PERSONAL_ACCESS_TOKEN
+  const credential =
+    (await dbService.getGitHubCredential(userId)) ??
+    (await dbService.migrateLegacyGitHubCredential(userId))
 
-  if (!accessToken) {
+  if (!credential) {
     return NextResponse.json(
-      { error: "GitHub access token missing. Please sign in again." },
-      { status: 400 }
+      { error: "Reconnect GitHub to resume automatic syncing.", code: "reauthorize" },
+      { status: 401 }
     )
   }
 
-  let githubLogin = (session.user as any)?.githubLogin || user?.githubLogin
+  try {
+    const result = await syncUserGitHubIfDue(
+      userId,
+      credential.githubLogin,
+      credential.accessToken,
+      user?.lastSyncedAt ?? null
+    )
 
-  if (!githubLogin) {
-    try {
-      const ghUser = await fetchGitHubUser(accessToken)
-      githubLogin = ghUser.login
-      await dbService.saveUser(userId, {
-        githubLogin: ghUser.login,
-        githubId: ghUser.id,
-        image: ghUser.avatar_url || user?.image,
-      })
-    } catch (err) {
+    return NextResponse.json({ success: true, ...result })
+  } catch (error) {
+    if (error instanceof GitHubApiError && error.status === 401) {
       return NextResponse.json(
-        { error: "Could not fetch GitHub user profile" },
-        { status: 500 }
+        { error: "GitHub authorization expired. Reconnect GitHub to continue.", code: "reauthorize" },
+        { status: 401 }
       )
     }
+
+    console.error("GitHub sync failed", error)
+    return NextResponse.json(
+      { error: "GitHub sync failed. Please try again later." },
+      { status: 502 }
+    )
   }
-
-  const result = await syncUserGitHub(userId, githubLogin, accessToken)
-
-  return NextResponse.json({ success: true, ...result })
 }

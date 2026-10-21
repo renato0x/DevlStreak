@@ -6,34 +6,29 @@ interface StatCardProps {
   label: string
   value: string | number
   sub?: string
-  icon: React.ReactNode
+  icon?: React.ReactNode
   accent?: boolean
 }
 
-export function StatCard({ label, value, sub, icon, accent }: StatCardProps) {
+export function StatCard({ label, value, sub, accent }: StatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.06] bg-white/[0.03] p-5 flex flex-col gap-3 transition-colors hover:border-white/[0.1]",
-        accent && "border-violet-500/30 bg-violet-500/5"
+        "flex min-h-[132px] flex-col justify-between bg-[#111111] p-4 transition-colors hover:bg-[#171717] sm:p-5",
+        accent && "bg-[#15131a]"
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
-          {label}
-        </span>
-        <span className="text-white/30">{icon}</span>
-      </div>
+      <span className="text-xs font-medium text-white/50">{label}</span>
       <div>
         <p
           className={cn(
-            "text-3xl font-bold tracking-tight",
-            accent ? "text-violet-400" : "text-white"
+            "text-2xl font-medium tracking-tight tabular-nums sm:text-[28px]",
+            accent ? "text-sky-300" : "text-white"
           )}
         >
           {value}
         </p>
-        {sub && <p className="text-xs text-white/30 mt-1">{sub}</p>}
+        {sub && <p className="mt-1 text-xs text-white/40">{sub}</p>}
       </div>
     </div>
   )

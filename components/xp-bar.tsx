@@ -1,6 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { levelTitle } from "@/lib/engine/xp"
 
 interface XpBarProps {
@@ -12,26 +11,31 @@ interface XpBarProps {
 
 export function XpBar({ level, xp, xpForNext, progress }: XpBarProps) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
-          Level
-        </span>
-        <span className="text-xs text-white/30 font-mono">{levelTitle(level)}</span>
+    <div className="flex flex-col gap-4 rounded-lg bg-[#111111] p-5">
+      <div className="flex items-center justify-between gap-4">
+        <span className="text-sm font-medium text-white">Level progression</span>
+        <span className="text-xs text-white/45">{levelTitle(level)}</span>
       </div>
 
-      <div className="flex items-end gap-3">
-        <span className="text-3xl font-bold tracking-tight text-white">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="text-2xl font-medium tracking-tight text-white sm:text-[28px]">
           Lv. {level}
         </span>
-        <span className="text-sm text-white/30 mb-1 font-mono">
+        <span className="text-sm text-white/45 tabular-nums">
           {xp.toLocaleString()} / {xpForNext.toLocaleString()} XP
         </span>
       </div>
 
-      <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+      <div
+        className="h-2 w-full overflow-hidden rounded-full bg-white/[0.1]"
+        role="progressbar"
+        aria-label={`Level ${level} progress`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+      >
         <div
-          className="h-full bg-gradient-to-r from-violet-500 to-violet-400 rounded-full transition-all duration-700"
+          className="h-full rounded-full bg-sky-400 transition-[width] duration-700"
           style={{ width: `${progress}%` }}
         />
       </div>

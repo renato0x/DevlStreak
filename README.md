@@ -62,13 +62,21 @@ npm install
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 AUTH_SECRET=your_auth_secret
-NEXTAUTH_URL=http://localhost:3000
+AUTH_URL=http://localhost:3000
 
 # Firebase Cloud Firestore (Spark Free Plan)
 FIREBASE_PROJECT_ID=your_project_id
 FIREBASE_CLIENT_EMAIL=your_service_account_email
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
+
+For the production Vercel URL, set `AUTH_URL` to the deployed origin and configure the GitHub OAuth App callback URL as:
+
+```text
+https://devl-streak.vercel.app/api/auth/callback/github
+```
+
+GitHub activity syncs automatically when the dashboard opens, then at most once per hour while it remains open. OAuth credentials stay in the server-only `githubCredentials` Firestore collection and are never sent to the browser.
 
 3. Run the development server:
 ```bash

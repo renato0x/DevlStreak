@@ -20,26 +20,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {
-        token.accessToken = account.access_token
-        token.githubLogin = (profile as any).login
-        token.githubId = (profile as any).id
+        const githubProfile = profile as {
+          login?: string
+          id?: number
+          avatar_url?: string
+        }
+        const githubLogin = githubProfile.login
+        const githubId = githubProfile.id
+        token.githubLogin = githubLogin
+        token.githubId = githubId
 
-        // Auto-save user to Firestore
-        const userId = token.sub || (profile as any).id?.toString()
-        if (userId) {
+        const userId = token.sub || githubId?.toString()
+        if (userId && githubLogin && githubId && account.access_token) {
           try {
-            await dbService.saveUser(userId, {
-              id: userId,
-              name: token.name || (profile as any).login,
-              email: token.email || null,
-              image: token.picture || (profile as any).avatar_url,
-              githubLogin: (profile as any).login,
-              githubId: (profile as any).id,
+            await dbService.upsertUserProfile(userId, {
+              name: token.name || githubLogin,
+              image: token.picture || githubProfile.avatar_url || null,
+              githubLogin,
+              githubId,
+            })
+            await dbService.saveGitHubCredential(userId, {
               accessToken: account.access_token,
-              createdAt: new Date().toISOString(),
+              githubLogin,
+              githubId,
             })
           } catch (e) {
-            console.error("Error saving user to Firestore in JWT callback", e)
+            console.error("Error saving GitHub account data", e)
           }
         }
       }
@@ -48,8 +54,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.sub as string) || ""
-        ;(session.user as any).githubLogin = token.githubLogin
-        ;(session as any).accessToken = token.accessToken
+        session.user.githubLogin =
+          typeof token.githubLogin === "string" ? token.githubLogin : undefined
       }
       return session
     },

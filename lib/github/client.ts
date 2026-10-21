@@ -7,6 +7,29 @@ export interface ContributionDay {
   contributionCount: number
 }
 
+interface GitHubContributionsResponse {
+  data?: {
+    user?: {
+      contributionsCollection?: {
+        contributionCalendar?: {
+          weeks?: { contributionDays: ContributionDay[] }[]
+        }
+      }
+    }
+  }
+  errors?: { message?: string }[]
+}
+
+export class GitHubApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message)
+    this.name = "GitHubApiError"
+  }
+}
+
 export async function fetchGitHubContributions(
   login: string,
   accessToken: string
@@ -36,6 +59,8 @@ export async function fetchGitHubContributions(
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -49,12 +74,20 @@ export async function fetchGitHubContributions(
   })
 
   if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status}`)
+    throw new GitHubApiError(`GitHub API error: ${res.status}`, res.status)
   }
 
-  const { data } = await res.json()
+  const { data, errors } = (await res.json()) as GitHubContributionsResponse
+  if (errors?.length) {
+    throw new GitHubApiError("GitHub GraphQL request failed", 502)
+  }
+
   const weeks =
     data?.user?.contributionsCollection?.contributionCalendar?.weeks ?? []
+
+  if (!data?.user) {
+    throw new GitHubApiError("GitHub user was not found", 404)
+  }
 
   return weeks.flatMap(
     (w: { contributionDays: ContributionDay[] }) => w.contributionDays
@@ -68,8 +101,12 @@ export async function fetchGitHubUser(
   accessToken: string
 ): Promise<{ login: string; id: number; avatar_url: string }> {
   const res = await fetch("https://api.github.com/user", {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
   })
-  if (!res.ok) throw new Error(`GitHub user fetch error: ${res.status}`)
+  if (!res.ok) throw new GitHubApiError(`GitHub user fetch error: ${res.status}`, res.status)
   return res.json()
 }

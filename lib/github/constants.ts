@@ -1,0 +1,1 @@
+export const GITHUB_SYNC_INTERVAL_MS = 60 * 60 * 1000

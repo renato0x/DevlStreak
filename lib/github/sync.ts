@@ -3,6 +3,15 @@ import { fetchGitHubContributions } from "./client"
 import { calculateStreak } from "@/lib/engine/streak"
 import { calculateLevel, xpForDay } from "@/lib/engine/xp"
 import { checkNewAchievements } from "@/lib/engine/achievements"
+import { GITHUB_SYNC_INTERVAL_MS } from "./constants"
+
+export { GITHUB_SYNC_INTERVAL_MS } from "./constants"
+
+export function isGitHubSyncDue(lastSyncedAt: string | null): boolean {
+  if (!lastSyncedAt) return true
+  const lastSynced = Date.parse(lastSyncedAt)
+  return Number.isNaN(lastSynced) || Date.now() - lastSynced >= GITHUB_SYNC_INTERVAL_MS
+}
 
 export async function syncUserGitHub(
   userId: string,
@@ -79,5 +88,33 @@ export async function syncUserGitHub(
     streak: streakResult,
     level: levelResult,
     newAchievements,
+  }
+}
+
+export async function syncUserGitHubIfDue(
+  userId: string,
+  githubLogin: string,
+  accessToken: string,
+  lastSyncedAt: string | null
+) {
+  if (!isGitHubSyncDue(lastSyncedAt)) {
+    return { synced: false as const, reason: "fresh" as const }
+  }
+
+  const lockId = await dbService.acquireGitHubSyncLock(userId)
+  if (!lockId) {
+    return { synced: false as const, reason: "in_progress" as const }
+  }
+
+  try {
+    const currentUser = await dbService.getUser(userId)
+    if (!isGitHubSyncDue(currentUser?.lastSyncedAt ?? null)) {
+      return { synced: false as const, reason: "fresh" as const }
+    }
+
+    const result = await syncUserGitHub(userId, githubLogin, accessToken)
+    return { synced: true as const, ...result }
+  } finally {
+    await dbService.releaseGitHubSyncLock(userId, lockId)
   }
 }

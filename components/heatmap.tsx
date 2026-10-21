@@ -14,10 +14,10 @@ interface HeatmapProps {
 
 function getIntensity(count: number): string {
   if (count === 0) return "bg-white/[0.04]"
-  if (count <= 2) return "bg-violet-500/20"
-  if (count <= 5) return "bg-violet-500/40"
-  if (count <= 9) return "bg-violet-500/65"
-  return "bg-violet-500"
+  if (count <= 2) return "bg-sky-400/20"
+  if (count <= 5) return "bg-sky-400/40"
+  if (count <= 9) return "bg-sky-400/65"
+  return "bg-sky-400"
 }
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -36,7 +36,7 @@ export function Heatmap({ contributions }: HeatmapProps) {
     start.setDate(start.getDate() - 52 * 7 + 1)
 
     const weeks: { date: string; count: number }[][] = []
-    let current = new Date(start)
+    const current = new Date(start)
 
     while (current <= today) {
       const week: { date: string; count: number }[] = []
@@ -66,10 +66,14 @@ export function Heatmap({ contributions }: HeatmapProps) {
   }, [grid])
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
-      <p className="text-xs font-medium text-white/40 uppercase tracking-widest mb-4">
-        Contribution Activity
-      </p>
+    <div className="rounded-lg bg-[#111111] p-5">
+      <div className="mb-5 flex items-baseline justify-between gap-4">
+        <div>
+          <h2 className="text-base font-medium text-white">Contribution activity</h2>
+          <p className="mt-1 text-xs text-white/40">Your last 52 weeks on GitHub</p>
+        </div>
+        <span className="hidden text-xs text-white/35 sm:block">Less · More</span>
+      </div>
 
       <div className="overflow-x-auto">
         <div className="relative">
@@ -107,9 +111,10 @@ export function Heatmap({ contributions }: HeatmapProps) {
                     key={day.date}
                     title={`${day.date}: ${day.count} contributions`}
                     className={cn(
-                      "w-3 h-3 rounded-sm transition-colors cursor-default",
+                      "h-3 w-3 cursor-default rounded-[3px] transition-colors",
                       getIntensity(day.count)
                     )}
+                    aria-label={`${day.date}: ${day.count} contributions`}
                   />
                 ))}
               </div>
@@ -119,9 +124,9 @@ export function Heatmap({ contributions }: HeatmapProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-1.5 mt-3 justify-end">
+      <div className="mt-3 flex items-center justify-end gap-1.5 sm:hidden">
         <span className="text-[10px] text-white/25">Less</span>
-        {["bg-white/[0.04]","bg-violet-500/20","bg-violet-500/40","bg-violet-500/65","bg-violet-500"].map((c) => (
+        {["bg-white/[0.04]", "bg-sky-400/20", "bg-sky-400/40", "bg-sky-400/65", "bg-sky-400"].map((c) => (
           <div key={c} className={cn("w-3 h-3 rounded-sm", c)} />
         ))}
         <span className="text-[10px] text-white/25">More</span>

@@ -6,7 +6,8 @@ import { StatCard } from "@/components/stat-card"
 import { XpBar } from "@/components/xp-bar"
 import { Heatmap } from "@/components/heatmap"
 import { AchievementsCard } from "@/components/achievements-card"
-import { Flame, Trophy, Calendar, Zap, RefreshCw, Sparkles, ExternalLink } from "lucide-react"
+import { Sparkles } from "lucide-react"
+import { GITHUB_SYNC_INTERVAL_MS } from "@/lib/github/constants"
 import type { AchievementType } from "@/lib/engine/achievements"
 
 interface UserStats {
@@ -33,8 +34,6 @@ interface StatsApiResponse {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [data, setData] = useState<StatsApiResponse>({
     user: null,
@@ -55,34 +54,36 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Failed to load stats", err)
-    } finally {
-      setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchStats()
+    const timer = window.setTimeout(() => void fetchStats(), 0)
+    return () => window.clearTimeout(timer)
   }, [fetchStats])
 
-  const handleSync = async () => {
-    setSyncing(true)
-    setSyncMessage(null)
+  const syncInBackground = useCallback(async () => {
     try {
       const res = await fetch("/api/github/sync", { method: "POST" })
-      const result = await res.json()
-      if (res.ok) {
-        setSyncMessage("Sync successful! Stats updated.")
+      const result = await res.json().catch(() => null)
+      if (res.ok && result?.synced) {
         await fetchStats()
-      } else {
-        setSyncMessage(result.error || "Sync failed. Please check your credentials.")
+      } else if (!res.ok) {
+        setSyncMessage(result?.error || "Sync failed. Please check your credentials.")
       }
-    } catch (err) {
-      setSyncMessage("Error during sync.")
-    } finally {
-      setSyncing(false)
-      setTimeout(() => setSyncMessage(null), 5000)
+    } catch {
+      setSyncMessage("GitHub could not be synced right now.")
     }
-  }
+  }, [fetchStats])
+
+  useEffect(() => {
+    const syncTimer = window.setTimeout(() => void syncInBackground(), 0)
+    const interval = window.setInterval(() => void syncInBackground(), GITHUB_SYNC_INTERVAL_MS)
+    return () => {
+      window.clearTimeout(syncTimer)
+      window.clearInterval(interval)
+    }
+  }, [syncInBackground])
 
   const user = data.user
   const currentStreak = user?.currentStreak ?? 0
@@ -99,70 +100,55 @@ export default function DashboardPage() {
   const unlockedAchievementTypes = data.achievements.map((a) => a.type)
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-7 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.06] pb-5">
+      <div className="flex flex-col gap-4 pb-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span>Welcome back</span>
-            {session?.user?.name && (
-              <span className="text-violet-400 font-semibold">
-                , {session.user.name}
-              </span>
-            )}
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">
+            DevlStreak / progress
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[28px]">
+            Activity overview
           </h1>
-          <p className="text-xs text-white/40 mt-1">
+          <p className="mt-2 text-sm text-white/55">
+            {session?.user?.name ? `GitHub activity for ${session.user.name}.` : "Your GitHub activity, at a glance."}{" "}
             {user?.lastSyncedAt
-              ? `Last synced: ${new Date(user.lastSyncedAt).toLocaleString()}`
-              : "Not synced with GitHub yet"}
+              ? `Last synced ${new Date(user.lastSyncedAt).toLocaleString()}.`
+              : "Connect GitHub to start tracking."}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 text-white text-xs font-medium transition-all disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={syncing ? "animate-spin text-violet-400" : ""} />
-            <span>{syncing ? "Syncing GitHub..." : "Sync GitHub"}</span>
-          </button>
-        </div>
       </div>
 
       {syncMessage && (
-        <div className="p-3 rounded-lg border border-violet-500/20 bg-violet-500/10 text-xs text-violet-300 flex items-center gap-2 animate-in fade-in">
-          <Sparkles size={14} className="shrink-0" />
+        <div role="status" className="flex items-center gap-2 border-l-2 border-sky-400 px-3 py-2 text-sm text-white/70 animate-in fade-in">
+          <Sparkles size={14} aria-hidden="true" className="shrink-0 text-sky-300" />
           <span>{syncMessage}</span>
         </div>
       )}
 
       {/* Hero Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-white/[0.1] md:grid-cols-4">
         <StatCard
           label="Current Streak"
           value={`${currentStreak} d`}
           sub={`Record: ${longestStreak} days`}
-          icon={<Flame size={18} className="text-violet-400" />}
           accent={currentStreak > 0}
         />
         <StatCard
           label="Longest Streak"
           value={`${longestStreak} d`}
           sub="All-time high"
-          icon={<Trophy size={18} />}
         />
         <StatCard
           label="Total Active Days"
           value={totalActiveDays}
           sub="Tracked on GitHub"
-          icon={<Calendar size={18} />}
         />
         <StatCard
           label="Total XP"
           value={xp.toLocaleString()}
           sub={`Level ${level} Explorer`}
-          icon={<Zap size={18} />}
         />
       </div>
 

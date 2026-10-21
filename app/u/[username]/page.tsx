@@ -5,9 +5,8 @@ import { StatCard } from "@/components/stat-card"
 import { XpBar } from "@/components/xp-bar"
 import { Heatmap } from "@/components/heatmap"
 import { AchievementsCard } from "@/components/achievements-card"
-import { Flame, Trophy, Calendar, Zap, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { GithubIcon } from "@/components/icons"
-import type { AchievementType } from "@/lib/engine/achievements"
 
 export const dynamic = "force-dynamic"
 
@@ -24,21 +23,21 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4">
+      <main className="min-h-[100svh] bg-[#0a0a0a] text-white flex flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="w-12 h-12 rounded-xl bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center mb-5">
           <GithubIcon className="text-white/40" size={24} />
         </div>
-        <h1 className="text-xl font-bold">User @{username} not found</h1>
-        <p className="text-sm text-white/40 mt-1 max-w-sm">
+        <h1 className="text-2xl font-semibold tracking-tight">User @{username} not found</h1>
+        <p className="text-sm text-white/50 mt-3 max-w-sm leading-6">
           This user has not synced their GitHub profile with DevlStreak yet.
         </p>
         <Link
           href="/login"
-          className="mt-6 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors"
+          className="mt-7 inline-flex min-h-11 items-center px-5 rounded-[10px] bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a] transition-colors"
         >
           Claim your DevlStreak profile
         </Link>
-      </div>
+      </main>
     )
   }
 
@@ -53,76 +52,78 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
   const unlockedTypes = userAchievements.map((a) => a.type)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 max-w-5xl mx-auto flex flex-col gap-6">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={14} />
-          <span>DevlStreak</span>
-        </Link>
-        <a
-          href={`https://github.com/${user.githubLogin}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
-        >
-          <GithubIcon size={14} />
-          <span>github.com/{user.githubLogin}</span>
-        </a>
-      </div>
+    <main className="min-h-[100svh] bg-[#0a0a0a] text-white px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <div className="max-w-6xl mx-auto flex flex-col gap-8 sm:gap-10">
+        {/* Top Bar */}
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-sm text-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded-sm transition-colors"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to DevlStreak</span>
+          </Link>
+          <a
+            href={`https://github.com/${user.githubLogin}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-w-0 items-center gap-1.5 text-sm text-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded-sm transition-colors"
+          >
+            <GithubIcon size={14} />
+            <span className="truncate max-w-[15rem] sm:max-w-none">github.com/{user.githubLogin}</span>
+          </a>
+        </header>
 
-      {/* User Header */}
-      <div className="flex items-center gap-4">
-        {user.image && (
-          <Image
-            src={user.image}
-            alt={user.name || user.githubLogin || "User avatar"}
-            width={64}
-            height={64}
-            className="rounded-full ring-2 ring-violet-500/30"
-          />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {user.name || user.githubLogin}
-          </h1>
-          <p className="text-xs text-white/40 font-mono mt-0.5">
-            @{user.githubLogin} · Level {user.level}
+        {/* User Header */}
+        <section className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            {user.image && (
+              <Image
+                src={user.image}
+                alt={user.name || user.githubLogin || "User avatar"}
+                width={76}
+                height={76}
+                className="rounded-full ring-2 ring-sky-500/30"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.04em] leading-tight">
+                {user.name || user.githubLogin}
+              </h1>
+              <p className="text-sm text-white/50 mt-2">
+                @{user.githubLogin} <span className="text-white/25">·</span> Level {user.level}
+              </p>
+            </div>
+          </div>
+          <p className="max-w-xs text-sm leading-6 text-white/45 sm:text-right">
+            Streaks, levels, and milestones from GitHub.
           </p>
-        </div>
-      </div>
+        </section>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section aria-label="Profile statistics" className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Current Streak"
           value={`${user.currentStreak} d`}
           sub={`Record: ${user.longestStreak} days`}
-          icon={<Flame size={18} className="text-violet-400" />}
           accent={user.currentStreak > 0}
         />
         <StatCard
           label="Longest Streak"
           value={`${user.longestStreak} d`}
           sub="All-time high"
-          icon={<Trophy size={18} />}
         />
         <StatCard
           label="Total Active Days"
           value={user.totalActiveDays}
           sub="Tracked on GitHub"
-          icon={<Calendar size={18} />}
         />
         <StatCard
           label="Total XP"
           value={user.xp.toLocaleString()}
           sub={`Level ${user.level}`}
-          icon={<Zap size={18} />}
         />
-      </div>
+      </section>
 
       {/* Progression */}
       <XpBar
@@ -137,6 +138,7 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
 
       {/* Achievements */}
       <AchievementsCard unlockedTypes={unlockedTypes} />
-    </div>
+      </div>
+    </main>
   )
 }
