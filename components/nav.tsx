@@ -9,7 +9,7 @@ export function Nav() {
   const githubLogin = session?.user?.githubLogin ?? session?.user?.name
 
   return (
-    <header className="min-h-16 flex items-center justify-between gap-4 px-4 sm:px-6 shrink-0">
+    <header className="flex min-h-14 shrink-0 items-center justify-between gap-4 px-4 sm:min-h-16 sm:px-6">
       <div className="flex items-center gap-2">
         <Image
           src="/logo.png"
@@ -41,7 +41,7 @@ export function Nav() {
           <button
             onClick={() => signOut()}
             type="button"
-            className="text-xs text-white/45 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a] rounded-sm transition-colors"
+            className="inline-flex min-h-11 items-center rounded-sm px-2 text-xs text-white/60 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]"
           >
             Sign out
           </button>

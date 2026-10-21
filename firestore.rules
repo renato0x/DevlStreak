@@ -22,6 +22,7 @@ rules_version = '2';
 //   - lastSyncedAt: string | timestamp | null (optional, ISO 8601 string or timestamp) - Last sync time
 //   - createdAt: string | timestamp (required on create, ISO 8601 string or timestamp, immutable) - Creation time
 //   - updatedAt: string | timestamp | null (optional, ISO 8601 string or timestamp) - Last update time
+//   - featuredStickerId: string | null (optional, selected public sticker ID)
 //   Note: Sensitive tokens (such as accessToken, refreshToken, secret) are strictly prohibited.
 //
 // Subcollection: users/{userId}/contributions
@@ -120,7 +121,8 @@ service cloud.firestore {
                'totalActiveDays',
                'lastSyncedAt',
                'createdAt',
-               'updatedAt'
+               'updatedAt',
+               'featuredStickerId'
              ]) &&
              // Explicit token lockdown: never allow sensitive credentials in public user profile
              !('accessToken' in data) &&
@@ -143,7 +145,11 @@ service cloud.firestore {
              // Timestamp fields
              (!('lastSyncedAt' in data) || data.lastSyncedAt == null || isValidTimestampOrIso(data.lastSyncedAt)) &&
              (!('createdAt' in data) || isValidTimestampOrIso(data.createdAt)) &&
-             (!('updatedAt' in data) || data.updatedAt == null || isValidTimestampOrIso(data.updatedAt));
+             (!('updatedAt' in data) || data.updatedAt == null || isValidTimestampOrIso(data.updatedAt)) &&
+             (!('featuredStickerId' in data) || data.featuredStickerId == null || data.featuredStickerId in [
+               'first-spark', 'week-builder', 'month-maker', 'century-loop', 'level-five',
+               'level-ten', 'fifty-days', 'hundred-days', 'year-round'
+             ]);
     }
 
     // Ensure immutable fields on user document are not modified on update
@@ -204,54 +210,17 @@ service cloud.firestore {
 
     // User profile documents
     match /users/{userId} {
-      // Public read for profile stats (/u/[username]), provided no sensitive tokens exist.
-      // Authenticated owners can always read their own profile.
-      allow get: if isOwner(userId) || hasNoSensitiveData();
-      // Allow profile lookup queries (e.g., searching by githubLogin)
-      allow list: if true;
-
-      // Only the authenticated owner can create/update their profile document
-      allow create: if isOwner(userId) &&
-                       hasRequiredFields(['createdAt']) &&
-                       isValidUser(userId, request.resource.data);
-
-      allow update: if isOwner(userId) &&
-                       isValidUser(userId, request.resource.data) &&
-                       areImmutableUserFieldsUnchanged();
-
-      // Only owner can delete their own profile
-      allow delete: if isOwner(userId);
+      // Public profiles are read through server DTOs. The app uses Admin SDK writes only.
+      allow get, list, create, update, delete: if false;
 
       // Subcollection: Contributions daily records
       match /contributions/{date} {
-        // Read is restricted to the authenticated owner (least privilege)
-        allow read: if isOwner(userId);
-
-        // Only authenticated owner can write contribution records
-        allow create: if isOwner(userId) &&
-                         isValidContribution(date, request.resource.data);
-
-        allow update: if isOwner(userId) &&
-                         isValidContribution(date, request.resource.data) &&
-                         areImmutableContributionFieldsUnchanged();
-
-        allow delete: if isOwner(userId);
+        allow read, write: if false;
       }
 
       // Subcollection: User unlocked achievements
       match /achievements/{type} {
-        // Public read for achievements to render badges on public profiles (/u/[username])
-        allow read: if true;
-
-        // Only authenticated owner can record their own unlocked achievements
-        allow create: if isOwner(userId) &&
-                         isValidAchievement(type, request.resource.data);
-
-        allow update: if isOwner(userId) &&
-                         isValidAchievement(type, request.resource.data) &&
-                         areImmutableAchievementFieldsUnchanged();
-
-        allow delete: if isOwner(userId);
+        allow read, write: if false;
       }
     }
 

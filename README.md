@@ -78,6 +78,8 @@ https://devl-streak.vercel.app/api/auth/callback/github
 
 GitHub activity syncs automatically when the dashboard opens, then at most once per hour while it remains open. OAuth credentials stay in the server-only `githubCredentials` Firestore collection and are never sent to the browser.
 
+Achievements also unlock developer stickers. Select one unlocked sticker in the dashboard to feature it on your public profile; the unlock ledger remains server-managed and cannot be changed from the browser.
+
 3. Run the development server:
 ```bash
 npm run dev

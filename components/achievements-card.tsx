@@ -1,10 +1,20 @@
 "use client"
 
 import { ACHIEVEMENT_DEFS, AchievementType } from "@/lib/engine/achievements"
+import { CalendarDays, Flame, Medal, Rocket, Sparkles, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AchievementsCardProps {
   unlockedTypes: AchievementType[]
+}
+
+const icons = {
+  spark: Sparkles,
+  flame: Flame,
+  calendar: CalendarDays,
+  rocket: Rocket,
+  trophy: Trophy,
+  medal: Medal,
 }
 
 export function AchievementsCard({ unlockedTypes }: AchievementsCardProps) {
@@ -26,6 +36,7 @@ export function AchievementsCard({ unlockedTypes }: AchievementsCardProps) {
       <div className="grid grid-cols-1 gap-px overflow-hidden rounded-md bg-white/[0.1] sm:grid-cols-2 md:grid-cols-3">
         {allAchievements.map((item) => {
           const isUnlocked = unlockedSet.has(item.type)
+          const Icon = icons[item.icon]
           return (
             <div
               key={item.type}
@@ -36,8 +47,8 @@ export function AchievementsCard({ unlockedTypes }: AchievementsCardProps) {
                   : "text-white/45 opacity-70 grayscale"
               )}
             >
-              <span className="mt-0.5 w-5 shrink-0 text-center text-base leading-none" aria-hidden="true">
-                {item.icon}
+              <span className="mt-0.5 flex w-5 shrink-0 justify-center" aria-hidden="true">
+                <Icon size={16} strokeWidth={1.7} />
               </span>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-semibold truncate leading-tight">

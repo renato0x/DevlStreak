@@ -29,7 +29,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <section className="rounded-[20px] border border-white/10 bg-[#111111] p-6 sm:p-7 flex flex-col gap-5">
+        <section className="mx-4 flex flex-col gap-5 rounded-[20px] border border-white/10 bg-[#111111] p-6 sm:mx-0 sm:p-7">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-white">Sign in with GitHub</h2>
             <p className="text-sm text-white/50 mt-2 leading-6">

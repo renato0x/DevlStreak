@@ -6,9 +6,11 @@ import { StatCard } from "@/components/stat-card"
 import { XpBar } from "@/components/xp-bar"
 import { Heatmap } from "@/components/heatmap"
 import { AchievementsCard } from "@/components/achievements-card"
+import { StickerCollection } from "@/components/sticker-collection"
 import { Sparkles } from "lucide-react"
 import { GITHUB_SYNC_INTERVAL_MS } from "@/lib/github/constants"
 import type { AchievementType } from "@/lib/engine/achievements"
+import type { StickerId, StickerState } from "@/lib/engine/stickers"
 
 interface UserStats {
   xp: number
@@ -19,6 +21,7 @@ interface UserStats {
   lastSyncedAt: string | null
   githubLogin: string | null
   image: string | null
+  featuredStickerId: StickerId | null
 }
 
 interface ContributionItem {
@@ -30,6 +33,7 @@ interface StatsApiResponse {
   user: UserStats | null
   contributions: ContributionItem[]
   achievements: { type: AchievementType }[]
+  stickers: StickerState[]
 }
 
 export default function DashboardPage() {
@@ -39,6 +43,7 @@ export default function DashboardPage() {
     user: null,
     contributions: [],
     achievements: [],
+    stickers: [],
   })
 
   const fetchStats = useCallback(async () => {
@@ -50,6 +55,7 @@ export default function DashboardPage() {
           user: json.user,
           contributions: json.contributions || [],
           achievements: json.achievements || [],
+          stickers: json.stickers || [],
         })
       }
     } catch (err) {
@@ -68,6 +74,9 @@ export default function DashboardPage() {
       const result = await res.json().catch(() => null)
       if (res.ok && result?.synced) {
         await fetchStats()
+        if (result.newAchievements?.length) {
+          setSyncMessage(`${result.newAchievements.length} new sticker${result.newAchievements.length > 1 ? "s" : ""} unlocked in your collection.`)
+        }
       } else if (!res.ok) {
         setSyncMessage(result?.error || "Sync failed. Please check your credentials.")
       }
@@ -100,13 +109,11 @@ export default function DashboardPage() {
   const unlockedAchievementTypes = data.achievements.map((a) => a.type)
 
   return (
-    <div className="flex flex-col gap-7 pb-12">
+    <div className="flex flex-col gap-6 pb-8 sm:gap-7 sm:pb-12">
       {/* Top Header */}
       <div className="flex flex-col gap-4 pb-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">
-            DevlStreak / progress
-          </p>
+          <p className="mb-2 text-sm text-white/55">GitHub progress</p>
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[28px]">
             Activity overview
           </h1>
@@ -127,7 +134,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Hero Stats Grid */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-white/[0.1] md:grid-cols-4">
         <StatCard
           label="Current Streak"
@@ -152,7 +158,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Level & XP Progression */}
       <XpBar
         level={level}
         xp={currentLevelXp}
@@ -160,10 +165,22 @@ export default function DashboardPage() {
         progress={progressPercent}
       />
 
-      {/* Heatmap Section */}
       <Heatmap contributions={data.contributions} />
 
-      {/* Achievements Section */}
+      <StickerCollection
+        stickers={data.stickers}
+        onFeaturedChange={(featuredStickerId) => {
+          setData((current) => ({
+            ...current,
+            user: current.user ? { ...current.user, featuredStickerId } : current.user,
+            stickers: current.stickers.map((sticker) => ({
+              ...sticker,
+              featured: sticker.id === featuredStickerId,
+            })),
+          }))
+        }}
+      />
+
       <AchievementsCard unlockedTypes={unlockedAchievementTypes} />
     </div>
   )

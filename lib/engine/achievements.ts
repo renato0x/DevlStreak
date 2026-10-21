@@ -9,11 +9,13 @@ export type AchievementType =
   | "days_365"
   | "first_commit"
 
+export type AchievementIcon = "spark" | "flame" | "calendar" | "rocket" | "trophy" | "medal"
+
 export interface AchievementDef {
   type: AchievementType
   label: string
   description: string
-  icon: string
+  icon: AchievementIcon
 }
 
 export const ACHIEVEMENT_DEFS: Record<AchievementType, AchievementDef> = {
@@ -21,55 +23,55 @@ export const ACHIEVEMENT_DEFS: Record<AchievementType, AchievementDef> = {
     type: "first_commit",
     label: "First Blood",
     description: "Made your first contribution tracked by DevlStreak.",
-    icon: "⚡",
+    icon: "spark",
   },
   streak_7: {
     type: "streak_7",
     label: "Week Warrior",
     description: "Maintained a 7-day streak.",
-    icon: "🔥",
+    icon: "flame",
   },
   streak_30: {
     type: "streak_30",
     label: "Monthly Grinder",
     description: "Maintained a 30-day streak.",
-    icon: "🔥",
+    icon: "flame",
   },
   streak_100: {
     type: "streak_100",
     label: "Century Coder",
     description: "Maintained a 100-day streak.",
-    icon: "💯",
+    icon: "medal",
   },
   level_5: {
     type: "level_5",
     label: "Mid-Journey",
     description: "Reached level 5.",
-    icon: "⬆️",
+    icon: "rocket",
   },
   level_10: {
     type: "level_10",
     label: "Double Digits",
     description: "Reached level 10.",
-    icon: "🏆",
+    icon: "trophy",
   },
   days_50: {
     type: "days_50",
     label: "Half Century",
     description: "50 active development days.",
-    icon: "📅",
+    icon: "calendar",
   },
   days_100: {
     type: "days_100",
     label: "Centurion",
     description: "100 active development days.",
-    icon: "🎖️",
+    icon: "medal",
   },
   days_365: {
     type: "days_365",
     label: "Year-Round Dev",
     description: "365 active development days.",
-    icon: "🌍",
+    icon: "calendar",
   },
 }
 

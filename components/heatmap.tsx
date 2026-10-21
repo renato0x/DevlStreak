@@ -66,25 +66,26 @@ export function Heatmap({ contributions }: HeatmapProps) {
   }, [grid])
 
   return (
-    <div className="rounded-lg bg-[#111111] p-5">
+    <section className="bg-[#111111] p-4 sm:p-5" aria-labelledby="activity-title">
       <div className="mb-5 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-base font-medium text-white">Contribution activity</h2>
-          <p className="mt-1 text-xs text-white/40">Your last 52 weeks on GitHub</p>
+          <h2 id="activity-title" className="text-base font-medium text-white">Contribution activity</h2>
+          <p className="mt-1 text-xs leading-5 text-white/60">Your last 52 weeks on GitHub</p>
         </div>
-        <span className="hidden text-xs text-white/35 sm:block">Less · More</span>
+        <span className="hidden text-xs text-white/60 sm:block">Less · More</span>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="relative">
+      <p className="mb-3 text-xs text-white/60 sm:hidden">Swipe to view the full year.</p>
+      <div className="overflow-x-auto pb-1" tabIndex={0} aria-label="52-week contribution calendar">
+        <div className="relative min-w-max">
           {/* Month labels */}
-          <div className="flex mb-2 ml-8" style={{ gap: "3px" }}>
+          <div className="mb-2 ml-8 flex" style={{ gap: "3px" }}>
             {grid.map((_, i) => {
               const label = monthLabels.find((l) => l.col === i)
               return (
                 <div key={i} className="w-3 shrink-0">
                   {label && (
-                    <span className="text-[10px] text-white/25 whitespace-nowrap">
+                    <span className="whitespace-nowrap text-xs text-white/55">
                       {label.month}
                     </span>
                   )}
@@ -93,12 +94,12 @@ export function Heatmap({ contributions }: HeatmapProps) {
             })}
           </div>
 
-          <div className="flex gap-1">
+          <div className="flex" style={{ gap: "3px" }}>
             {/* Day labels */}
             <div className="flex flex-col mr-1" style={{ gap: "3px" }}>
               {DAYS.map((d, i) => (
-                <div key={i} className="h-3 flex items-center">
-                  <span className="text-[10px] text-white/25 w-6 text-right">{d}</span>
+                <div key={i} className="flex h-3 items-center">
+                  <span className="w-6 text-right text-xs text-white/55">{d}</span>
                 </div>
               ))}
             </div>
@@ -125,12 +126,12 @@ export function Heatmap({ contributions }: HeatmapProps) {
 
       {/* Legend */}
       <div className="mt-3 flex items-center justify-end gap-1.5 sm:hidden">
-        <span className="text-[10px] text-white/25">Less</span>
+        <span className="text-xs text-white/55">Less</span>
         {["bg-white/[0.04]", "bg-sky-400/20", "bg-sky-400/40", "bg-sky-400/65", "bg-sky-400"].map((c) => (
           <div key={c} className={cn("w-3 h-3 rounded-sm", c)} />
         ))}
-        <span className="text-[10px] text-white/25">More</span>
+        <span className="text-xs text-white/55">More</span>
       </div>
-    </div>
+    </section>
   )
 }

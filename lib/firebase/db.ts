@@ -2,6 +2,7 @@ import { firestore } from "./admin"
 import { FieldValue, type QueryDocumentSnapshot } from "firebase-admin/firestore"
 import { randomUUID } from "node:crypto"
 import type { AchievementType } from "@/lib/engine/achievements"
+import { isStickerId, type StickerId } from "@/lib/engine/stickers"
 
 export interface FirestoreUser {
   id: string
@@ -17,6 +18,7 @@ export interface FirestoreUser {
   lastSyncedAt: string | null
   createdAt: string
   updatedAt?: string
+  featuredStickerId: StickerId | null
 }
 
 export interface ContributionRecord {
@@ -48,6 +50,7 @@ function toUser(id: string, data: Record<string, unknown>): FirestoreUser {
     lastSyncedAt: typeof data.lastSyncedAt === "string" ? data.lastSyncedAt : null,
     createdAt: typeof data.createdAt === "string" ? data.createdAt : "",
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+    featuredStickerId: isStickerId(data.featuredStickerId) ? data.featuredStickerId : null,
   }
 }
 
@@ -106,6 +109,7 @@ export const dbService = {
         lastSyncedAt: null,
         createdAt: now,
         updatedAt: now,
+        featuredStickerId: null,
       })
     })
   },
@@ -195,6 +199,17 @@ export const dbService = {
       const snap = await transaction.get(ref)
       if (snap.data()?.lockId === lockId) transaction.delete(ref)
     })
+  },
+
+  // ─── Public profile cosmetics ──────────────────────────────────────────
+  async setFeaturedSticker(userId: string, stickerId: StickerId | null) {
+    await firestore.collection("users").doc(userId).set(
+      {
+        featuredStickerId: stickerId,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    )
   },
 
   // ─── Contributions ────────────────────────────────────────────────────

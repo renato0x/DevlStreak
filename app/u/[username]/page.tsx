@@ -7,6 +7,8 @@ import { Heatmap } from "@/components/heatmap"
 import { AchievementsCard } from "@/components/achievements-card"
 import { ArrowLeft } from "lucide-react"
 import { GithubIcon } from "@/components/icons"
+import { FeaturedSticker } from "@/components/featured-sticker"
+import { getStickerDefinition } from "@/lib/engine/stickers"
 
 export const dynamic = "force-dynamic"
 
@@ -50,6 +52,7 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
   const currentLevelXp = xp % xpForNext
   const progressPercent = Math.min(100, Math.floor((currentLevelXp / xpForNext) * 100))
   const unlockedTypes = userAchievements.map((a) => a.type)
+  const featuredSticker = getStickerDefinition(user.featuredStickerId)
 
   return (
     <main className="min-h-[100svh] bg-[#0a0a0a] text-white px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
@@ -95,9 +98,11 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
               </p>
             </div>
           </div>
-          <p className="max-w-xs text-sm leading-6 text-white/45 sm:text-right">
-            Streaks, levels, and milestones from GitHub.
-          </p>
+          {featuredSticker ? (
+            <FeaturedSticker sticker={featuredSticker} />
+          ) : (
+            <p className="max-w-xs text-sm leading-6 text-white/55 sm:text-right">Streaks, levels, and milestones from GitHub.</p>
+          )}
         </section>
 
       {/* Stat Cards */}

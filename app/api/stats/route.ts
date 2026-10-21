@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { dbService } from "@/lib/firebase/db"
+import { getStickerCollection } from "@/lib/engine/stickers"
 
 export async function GET() {
   const session = await auth()
@@ -12,6 +13,7 @@ export async function GET() {
   const user = await dbService.getUser(userId)
   const contribs = await dbService.getContributions(userId)
   const userAchievements = await dbService.getAchievements(userId)
+  const stickers = getStickerCollection(userAchievements, user?.featuredStickerId ?? null)
 
   return NextResponse.json({
     user: user && {
@@ -23,8 +25,10 @@ export async function GET() {
       lastSyncedAt: user.lastSyncedAt,
       githubLogin: user.githubLogin,
       image: user.image,
+      featuredStickerId: user.featuredStickerId,
     },
     contributions: contribs,
     achievements: userAchievements,
+    stickers,
   })
 }
